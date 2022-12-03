@@ -1,16 +1,19 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home"
-import Profile from "./pages/Profile"
-import Signin from "./pages/Signin"
-import Signup from "./pages/Signup"
-import ForgotPassword from "./pages/ForgotPassword"
-import Offers from "./pages/Offers"
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import Signin from "./pages/Signin";
+import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import Offers from "./pages/Offers";
+import Header from "./components/Header";
+
 
 
 function App() {
   return (
-    <div>
+    <>
       <Router>
+        <Header />
         <Routes>
           <Route path="/profile" element={<Profile />} />
           <Route path="/sign-in" element={<Signin />} />
@@ -20,7 +23,7 @@ function App() {
           <Route path="/" element={<Home />} />
         </Routes>
       </Router>
-    </div>
+    </>
   );
 }
 
