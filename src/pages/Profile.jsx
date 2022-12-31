@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getAuth, updateProfile } from "firebase/auth";
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { FcHome } from "react-icons/fc";
+import ListingItem from '../components/ListingItem';
 function Profile() {
   const auth = getAuth(); 
   const navigate = useNavigate();
   const [changeDetail, setChangeDetail] = useState(false);
+  const [listings, setListings] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: auth.currentUser.displayName,
     email: auth.currentUser.email,
@@ -46,6 +49,37 @@ async  function onSubmit() {
     }
   }
 
+  useEffect(() => {
+    async function fetchUserListings() {
+      const listingRef = collection(db, "listings");
+      const q = query(
+        listingRef,
+        where("userRef", "==", auth.currentUser.uid),
+        orderBy("timestamp", "desc")
+      );
+        const querySnap = await getDocs(q);
+        let listings = [];
+        querySnap.forEach((doc) => {
+          return listings.push({ id: doc.id, data: doc.data(), });
+        });
+      setListings(listings);
+      setLoading(false);
+    }
+    fetchUserListings();
+}, [auth.currentUser.uid])
+async function onDelete(listingID) {
+  if (window.confirm("Are you sure you want to delete?")) {
+    await deleteDoc(doc(db, "listings", listingID));
+    const updatedListings = listings.filter(
+      (listing) => listing.id !== listingID
+    );
+    setListings(updatedListings);
+    toast.success("Successfully deleted the listing");
+  }
+}
+function onEdit(listingID) {
+  navigate(`/edit-listing/${listingID}`);
+}
   return (
     <>
       <section className="max-w-6xl mx-auto flex flex-col justify-center items-center">
@@ -85,6 +119,25 @@ async  function onSubmit() {
 
         </div>
       </section> 
+      <div className="">
+        {!loading && listings.length > 0 && (
+          <>
+            <h2 className='text-2xl text-center font-semibold m-6'>My listing</h2>
+            <ul className='sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5
+            mt-6'>
+              {listings.map((listing) => (
+                <ListingItem
+                  key={listing.id}
+                  id={listing.id}
+                  listing={listing.data}
+                  onDelete={() => onDelete(listing.id)}
+                  onEdit={() => onEdit(listing.id)}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
     </>
   )
 }
